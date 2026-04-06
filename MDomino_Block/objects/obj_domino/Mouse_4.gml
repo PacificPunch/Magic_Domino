@@ -1,37 +1,41 @@
 /// obj_domino - Mouse Left Pressed
 
+// 1. ПРОВЕРКА ГОТОВНОСТИ (Чтобы не было ошибок)
 if (global.is_showing_starter) exit;
+if (!variable_global_exists("choice_mode")) exit;
 
-if (global.game_over || global.current_turn != "player") exit;
-
+// 2. ЛОГИКА ВЫБОРА
 if (global.choice_mode) {
+    // Если мы в режиме выбора стороны (лево/право)
     if (owner == "table") {
-        if (id == global.left_tile_id) {
-            global.play_domino(global.selected_domino, "left");
-            exit;
-        }
-        if (id == global.right_tile_id) {
-            global.play_domino(global.selected_domino, "right");
-            exit;
+        if (id == global.left_tile_id || id == global.right_tile_id) {
+            var side = (id == global.left_tile_id) ? "left" : "right";
+            global.play_domino(global.selected_domino, side);
         }
     }
-    exit;
-}
-
-if (owner == "player") {
-    var can_l = (value1 == global.left_end || value2 == global.left_end);
-    var can_r = (value1 == global.right_end || value2 == global.right_end);
-    
-    // Активируем выбор только если края РАЗНЫЕ
-    if (can_l && can_r && (global.left_end != global.right_end)) {
-        global.choice_mode = true;
-        global.selected_domino = id;
-        y -= 60;
+} else {
+    // Если мы выбираем кость из руки
+    if (owner == "player" && global.current_turn == "player") {
+        
+        // Проверка: можно ли вообще положить эту кость
+        var can_play = (ds_list_size(global.table_chain) == 0) ||
+                       (value1 == global.left_end || value2 == global.left_end || 
+                        value1 == global.right_end || value2 == global.right_end);
+        
+        if (can_play) {
+            // Если подходит к обоим концам — включаем режим выбора
+            var match_left = (value1 == global.left_end || value2 == global.left_end);
+            var match_right = (value1 == global.right_end || value2 == global.right_end);
+            
+            if (match_left && match_right && ds_list_size(global.table_chain) > 0) {
+                global.choice_mode = true;
+                global.selected_domino = id;
+            } else {
+                // Если подходит только к одному — кладем сразу
+                var side = match_left ? "left" : "right";
+                if (ds_list_size(global.table_chain) == 0) side = "first";
+                global.play_domino(id, side);
+            }
+        }
     }
-    // В остальных случаях (включая первый ход) используем автоматику
-    else if (ds_list_size(global.table_chain) == 0) {
-        global.play_domino(id, "first");
-    }
-    else if (can_l) global.play_domino(id, "left");
-    else if (can_r) global.play_domino(id, "right");
 }
