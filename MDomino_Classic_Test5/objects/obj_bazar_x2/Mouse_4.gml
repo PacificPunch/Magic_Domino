@@ -16,12 +16,12 @@ if (ds_list_size(global.bazar) > 0) {
     // ПРИНУДИТЕЛЬНОЕ ОБНОВЛЕНИЕ:
     dom.visible = true; // Сразу делаем видимой
     
-    if (instance_exists(obj_player_hand)) {
+    if (instance_exists(obj_player_hand_x2)) {
         // Вызываем расстановку напрямую через точку (более надежно в новых версиях GMS)
-        obj_player_hand.arrange_player_hand();
+        obj_player_hand_x2.arrange_player_hand();
         
         // Запускаем микро-задержку для повторной расстановки (гарантирует появление)
-        obj_player_hand.alarm[0] = 1; 
+        obj_player_hand_x2.alarm[0] = 1; 
     }
     
     // Проверка хода через контроллер
