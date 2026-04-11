@@ -1,6 +1,6 @@
 {
   "$GMProject":"v1",
-  "%Name":"MDomino_Cross",
+  "%Name":"MDomino_Cross2",
   "AudioGroups":[
     {"$GMAudioGroup":"v1","%Name":"audiogroup_default","exportDir":"","name":"audiogroup_default","resourceType":"GMAudioGroup","resourceVersion":"2.0","targets":-1,},
   ],
@@ -37,7 +37,7 @@
   "MetaData":{
     "IDEVersion":"2024.14.4.222",
   },
-  "name":"MDomino_Cross",
+  "name":"MDomino_Cross2",
   "resources":[
     {"id":{"name":"fnt_bazar","path":"fonts/fnt_bazar/fnt_bazar.yy",},},
     {"id":{"name":"fnt_menu","path":"fonts/fnt_menu/fnt_menu.yy",},},

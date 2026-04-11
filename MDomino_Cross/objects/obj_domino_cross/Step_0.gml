@@ -1,61 +1,17 @@
-/// obj_domino - Step Event
+/// @description obj_domino_cross - Step Event
 
-if (owner != "player") exit;
-if (global.is_showing_starter) exit;
-if (!variable_global_exists("game_over") || !variable_global_exists("current_turn")) exit;
-if (global.game_over || global.current_turn != "player") exit;
+// 1. ПРОВЕРКА СОСТОЯНИЯ ИГРЫ
+if (global.game_over) exit;
 
-// 1. Начало перетаскивания (только если не в режиме выбора)
-if (mouse_check_button_pressed(mb_left) && position_meeting(mouse_x, mouse_y, id)) {
-    if (!global.choice_mode) {
-        dragging = true;
-        selected = true;
-        offset_x = x - mouse_x;
-        offset_y = y - mouse_y;
-        depth = -300;
-    }
+// 2. ОБРАБОТКА ВИДИМОСТИ (ИСПРАВЛЕНО)
+// Кость должна быть видимой, если она у игрока, у КОМПЬЮТЕРА или на столе.
+// Только кости в базаре должны оставаться невидимыми (visible = false).
+if (owner == "player" || owner == "table" || owner == "computer") {
+    visible = true;
+} else {
+    visible = false;
 }
 
-// 2. Процесс движения
-if (dragging) {
-    x = mouse_x + offset_x;
-    y = mouse_y + offset_y;
-}
-
-// 3. Момент отпускания костяшки
-if (mouse_check_button_released(mb_left) && dragging) {
-    dragging = false;
-    selected = false;
-    depth = -200;
-    var placed = false;
-    
-    if (ds_list_size(global.table_chain) == 0) {
-        global.play_domino(id, "first");
-        placed = true;
-    } 
-    else {
-        var match_left = (value1 == global.left_end || value2 == global.left_end);
-        var match_right = (value1 == global.right_end || value2 == global.right_end);
-
-        // ПРОВЕРКА: Если подходит к обоим концам И эти концы РАЗНЫЕ
-        if (match_left && match_right && (global.left_end != global.right_end)) {
-            global.choice_mode = true;
-            global.selected_domino = id;
-            y = global.table_center_y + 250; 
-            placed = true; 
-        } 
-        // Если концы одинаковые (например, после первого дубля) или подходит только к одному
-        else if (match_left) { 
-            global.play_domino(id, "left"); 
-            placed = true; 
-        }
-        else if (match_right) { 
-            global.play_domino(id, "right"); 
-            placed = true; 
-        }
-    }
-    
-    if (!placed) {
-        with (obj_player_hand_cross) arrange_player_hand();
-    }
-}
+// 3. Логика плавного перемещения (если используете)
+// x = lerp(x, target_x, 0.1);
+// y = lerp(y, target_y, 0.1);

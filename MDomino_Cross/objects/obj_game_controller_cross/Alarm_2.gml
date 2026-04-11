@@ -1,63 +1,71 @@
-/// obj_game_controller_cross - Alarm 2 (Проверка состояния игры)
+/// @description obj_game_controller_cross - Alarm 2 (Проверка состояния игры)
 
-// 1. ПРОВЕРКА ПОБЕДЫ ПО ПУСТОЙ РУКЕ
-// Проверяем игрока
+if (global.game_over) exit;
+
+// --- 1. ПРОВЕРКА ПОБЕДЫ ПО ПУСТОЙ РУКЕ ---
 if (ds_list_size(global.player_hand) == 0) {
     global.game_over = true;
+    global.reveal_computer_hand(); // ПОКАЗЫВАЕМ ОСТАТКИ КОМПЬЮТЕРА
     global.end_message = "ПОБЕДА!\nВы выложили все кости.";
-    alarm[3] = 30; // Переход к экрану финала
+    alarm[3] = 90; // Даем игроку 3 секунды посмотреть на кости врага
     exit;
 }
 
-// Проверяем компьютер
 if (ds_list_size(global.computer_hand) == 0) {
     global.game_over = true;
+    // Кости игрока и так видны, поэтому просто задержка
     global.end_message = "ПРОИГРЫШ!\nПротивник избавился от всех костей.";
-    alarm[3] = 30;
+    alarm[3] = 90;
     exit;
 }
 
-// 2. ПРОВЕРКА НА "РЫБУ" (Блокировка игры)
-// Рыба возможна только если базар пуст
+// --- 2. ПРОВЕРКА НА "РЫБУ" (Блокировка игры) ---
+
+// А. Проверка на закрытие всех 4-х сторон дублями
+var active_sides_count = 0;
+var side_names = ["up", "down", "left", "right"];
+for (var i = 0; i < 4; i++) {
+    var s_data = variable_struct_get(global.ends, side_names[i]);
+    if (s_data.active) active_sides_count++;
+}
+
+// Если все стороны закрыты (active_sides_count == 0) — это Рыба (даже если есть базар!)
+if (active_sides_count == 0 && ds_list_size(global.table_chain) > 0) {
+    global.resolve_fish();
+    exit;
+}
+
+// Б. Стандартная Рыба (нет ходов ни у кого и базар пуст)
 if (ds_list_size(global.bazar) == 0) {
     var player_has_moves = global.check_has_moves(global.player_hand);
     var computer_has_moves = global.check_has_moves(global.computer_hand);
     
-    // Если ни у кого нет ходов — вызываем расчет очков
     if (!player_has_moves && !computer_has_moves) {
         global.resolve_fish();
         exit;
     }
 }
 
-// 3. ПРОВЕРКА НЕОБХОДИМОСТИ ИДТИ В БАЗАР (Для хода компьютера)
-// Если сейчас ход компьютера, и у него нет ходов, а в базаре что-то есть — заставляем его брать
-if (global.current_turn == "computer" && !global.game_over) {
+// --- 3. ПРОВЕРКА НЕОБХОДИМОСТИ ИДТИ В БАЗАР (Для хода компьютера) ---
+if (global.current_turn == "computer") {
     if (!global.check_has_moves(global.computer_hand)) {
         if (ds_list_size(global.bazar) > 0) {
-            // Запускаем таймер, чтобы компьютер взял кость из базара
-            alarm[1] = 30; 
+            alarm[1] = 30; // Берем из базара
         } else {
-            // Если базара нет и ходов нет — передаем ход игроку (пропуск хода)
             global.current_turn = "player";
-            // Повторно проверяем состояние через мгновение
             alarm[2] = 5;
         }
     } else {
-        // Если ходы есть — запускаем "раздумья" компьютера
         if (alarm[1] < 0) alarm[1] = 45;
     }
 }
 
-// 4. ПОДСКАЗКА ДЛЯ ИГРОКА
-// Если ход игрока и у него нет ходов
-if (global.current_turn == "player" && !global.game_over) {
+// --- 4. ПОДСКАЗКА ДЛЯ ИГРОКА ---
+if (global.current_turn == "player") {
     if (!global.check_has_moves(global.player_hand)) {
         if (ds_list_size(global.bazar) == 0) {
-            // Автоматический пропуск хода игроком, если ходить нечем и базара нет
             global.current_turn = "computer";
             alarm[2] = 10;
         }
-        // Если базар есть, контроллер просто ждет клика игрока по объекту obj_bazar_cross
     }
 }

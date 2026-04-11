@@ -1,8 +1,7 @@
-/// obj_game_controller - Alarm 4 (Конец демонстрации)
-
+/// @description Завершение показа стартера
 global.is_showing_starter = false;
 
-// Если сейчас ход компьютера, запускаем его "раздумья" через полсекунды
+// Если ход компьютера — запускаем его логику через небольшую паузу
 if (global.current_turn == "computer") {
     alarm[1] = 30;
 }
