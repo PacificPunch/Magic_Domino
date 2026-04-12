@@ -12,7 +12,7 @@
     {"name":"obj_game_controller","order":3,"path":"objects/obj_game_controller/obj_game_controller.yy",},
     {"name":"obj_player_hand","order":5,"path":"objects/obj_player_hand/obj_player_hand.yy",},
     {"name":"obj_table","order":7,"path":"objects/obj_table/obj_table.yy",},
-    {"name":"R_Domino","order":1,"path":"rooms/R_Domino/R_Domino.yy",},
+    {"name":"rm_game_classic","order":1,"path":"rooms/rm_game_classic/rm_game_classic.yy",},
     {"name":"sCell","order":1,"path":"sprites/sCell/sCell.yy",},
     {"name":"spr_01","order":1,"path":"sprites/spr_01/spr_01.yy",},
     {"name":"spr_02","order":2,"path":"sprites/spr_02/spr_02.yy",},

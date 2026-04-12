@@ -3,7 +3,7 @@
 randomize();
 repeat(irandom_range(5, 15)) { random(1); } 
 
-// --- 1. ОЧИСТКА ПАМЯТИ (Чтобы не было утечек при перезапуске) ---
+// --- 1. ОЧИСТКА ПАМЯТИ ---
 if (variable_global_exists("player_hand")) {
     if (ds_exists(global.player_hand, ds_type_list)) ds_list_destroy(global.player_hand);
     if (ds_exists(global.computer_hand, ds_type_list)) ds_list_destroy(global.computer_hand);
@@ -11,15 +11,14 @@ if (variable_global_exists("player_hand")) {
     if (ds_exists(global.table_chain, ds_type_list)) ds_list_destroy(global.table_chain);
 }
 
-// Удаляем старые объекты, если они остались
-if (instance_exists(obj_domino)) {
-    with (obj_domino) instance_destroy();
+if (instance_exists(obj_domino_b)) {
+    with (obj_domino_b) instance_destroy();
 }
 
 // --- 2. ОБЪЯВЛЕНИЕ ГЛОБАЛЬНЫХ ПЕРЕМЕННЫХ ---
 global.player_hand   = ds_list_create();
 global.computer_hand = ds_list_create();
-global.bazar         = ds_list_create();
+global.bazar         = ds_list_create(); // Оставляем пустой список, чтобы не было ошибок в других местах
 global.table_chain   = ds_list_create();
 
 global.choice_mode     = false;
@@ -39,21 +38,15 @@ global.is_showing_starter = false;
 global.end_message        = "";
 
 // Система змейки
-global.left_count = 0; 
-global.right_count = 0;
-global.left_edge_x = global.table_center_x; 
-global.left_edge_y = global.table_center_y;
-global.right_edge_x = global.table_center_x; 
-global.right_edge_y = global.table_center_y;
-global.left_dir = "left"; 
-global.right_dir = "right";
-global.first_turn_dir = "";
-global.left_prev_wid = 32; 
-global.right_prev_wid = 32;
+global.left_count = 0; global.right_count = 0;
+global.left_edge_x = global.table_center_x; global.left_edge_y = global.table_center_y;
+global.right_edge_x = global.table_center_x; global.right_edge_y = global.table_center_y;
+global.first_turn_dir = ""; 
+global.left_dir = "left"; global.right_dir = "right";
+global.left_prev_wid = 32; global.right_prev_wid = 32;
 
 // --- 3. ФУНКЦИИ ЛОГИКИ ---
 
-// Проверка наличия ходов
 global.check_has_moves = function(target_hand) {
     if (ds_list_size(global.table_chain) == 0) return true;
     for (var i = 0; i < ds_list_size(target_hand); i++) {
@@ -66,17 +59,13 @@ global.check_has_moves = function(target_hand) {
     return false;
 }
 
-// Функция "Рыбы" или финала
 global.resolve_fish = function() {
     global.game_over = true;
     var p_score = 0;
-    for (var i = 0; i < ds_list_size(global.player_hand); i++) {
-        p_score += global.player_hand[| i].value1 + global.player_hand[| i].value2;
-    }
+    for (var i = 0; i < ds_list_size(global.player_hand); i++) p_score += global.player_hand[| i].value1 + global.player_hand[| i].value2;
+    
     var c_score = 0;
-    for (var i = 0; i < ds_list_size(global.computer_hand); i++) {
-        c_score += global.computer_hand[| i].value1 + global.computer_hand[| i].value2;
-    }
+    for (var i = 0; i < ds_list_size(global.computer_hand); i++) c_score += global.computer_hand[| i].value1 + global.computer_hand[| i].value2;
     
     var msg = "🐟 РЫБА! 🐟\n\nВаши очки: " + string(p_score) + "\nОчки противника: " + string(c_score) + "\n\n";
     if (p_score < c_score) msg += "Вы победили!";
@@ -84,10 +73,9 @@ global.resolve_fish = function() {
     else msg += "Ничья!";
     
     global.end_message = msg;
-    alarm[3] = 60; // Показать окно финала через секунду
+    with (obj_game_controller_b) alarm[3] = 60; 
 }
 
-// Основная функция постановки кости (Play Domino)
 global.play_domino = function(dom_id, side) {
     global.choice_mode = false;
     global.selected_domino = noone;
@@ -97,23 +85,69 @@ global.play_domino = function(dom_id, side) {
     var wid_half = is_double ? 64 : 32;
     
     if (side == "first") {
-        dom_id.x = global.table_center_x;
-        dom_id.y = global.table_center_y;
+        dom_id.x = global.table_center_x; dom_id.y = global.table_center_y;
         dom_id.image_angle = is_double ? 0 : 90;
-        global.left_end = dom_id.value1;
-        global.right_end = dom_id.value2;
-        global.left_edge_x = dom_id.x - len_half;
-        global.left_edge_y = dom_id.y;
-        global.right_edge_x = dom_id.x + len_half;
-        global.right_edge_y = dom_id.y;
-        global.left_prev_wid = wid_half;
-        global.right_prev_wid = wid_half;
-        global.left_tile_id = dom_id;
-        global.right_tile_id = dom_id;
+        global.left_end = dom_id.value1; global.right_end = dom_id.value2;
+        global.left_edge_x = dom_id.x - len_half; global.left_edge_y = dom_id.y;
+        global.right_edge_x = dom_id.x + len_half; global.right_edge_y = dom_id.y;
+        global.left_prev_wid = wid_half; global.right_prev_wid = wid_half;
+        global.left_tile_id = dom_id; global.right_tile_id = dom_id;
     } 
     else {
-        // Здесь должен быть ваш стандартный код змейки (px, py, nx, ny и т.д.)
-        // Используйте тот же код, что и в оригинальном контроллере
+        var current_dir, target_dir, edge_x, edge_y, match_v1;
+        var p_wid = (side == "right") ? global.right_prev_wid : global.left_prev_wid;
+        if (side == "right") {
+            global.right_count++; current_dir = global.right_dir;
+            if (global.right_count <= 4) target_dir = "right";
+            else if (global.right_count <= 6) { 
+                if (global.first_turn_dir == "") global.first_turn_dir = choose("up", "down");
+                target_dir = global.first_turn_dir; 
+            } else target_dir = "left";
+            edge_x = global.right_edge_x; edge_y = global.right_edge_y;
+            match_v1 = (dom_id.value1 == global.right_end);
+            global.right_end = match_v1 ? dom_id.value2 : dom_id.value1;
+            global.right_tile_id = dom_id;
+        } else {
+            global.left_count++; current_dir = global.left_dir;
+            if (global.left_count <= 4) target_dir = "left";
+            else if (global.left_count <= 6) { 
+                if (global.first_turn_dir == "") global.first_turn_dir = choose("up", "down");
+                target_dir = (global.first_turn_dir == "up") ? "down" : "up"; 
+            } else target_dir = "right";
+            edge_x = global.left_edge_x; edge_y = global.left_edge_y;
+            match_v1 = (dom_id.value1 == global.left_end);
+            global.left_end = match_v1 ? dom_id.value2 : dom_id.value1;
+            global.left_tile_id = dom_id;
+        }
+
+        var px, py, nx, ny;
+        if (current_dir == target_dir) {
+            if (target_dir == "right") { px = edge_x + len_half; py = edge_y; nx = px + len_half; ny = py; }
+            else if (target_dir == "left") { px = edge_x - len_half; py = edge_y; nx = px - len_half; ny = py; }
+            else if (target_dir == "down") { px = edge_x; py = edge_y + len_half; nx = px; ny = py + len_half; }
+            else if (target_dir == "up") { px = edge_x; py = edge_y - len_half; nx = px; ny = py - len_half; }
+        } else {
+            if (current_dir == "right" && target_dir == "down") { px = edge_x - 32; py = edge_y + p_wid + len_half; nx = px; ny = py + len_half; }
+            else if (current_dir == "right" && target_dir == "up") { px = edge_x - 32; py = edge_y - p_wid - len_half; nx = px; ny = py - len_half; }
+            else if (current_dir == "left" && target_dir == "down") { px = edge_x + 32; py = edge_y + p_wid + len_half; nx = px; ny = py + len_half; }
+            else if (current_dir == "left" && target_dir == "up") { px = edge_x + 32; py = edge_y - p_wid - len_half; nx = px; ny = py - len_half; }
+            else if (current_dir == "down" && target_dir == "right") { px = edge_x + p_wid + len_half; py = edge_y - 32; nx = px + len_half; ny = py; }
+            else if (current_dir == "down" && target_dir == "left") { px = edge_x - p_wid - len_half; py = edge_y - 32; nx = px - len_half; ny = py; }
+            else if (current_dir == "up" && target_dir == "right") { px = edge_x + p_wid + len_half; py = edge_y + 32; nx = px + len_half; ny = py; }
+            else if (current_dir == "up" && target_dir == "left") { px = edge_x - p_wid - len_half; py = edge_y + 32; nx = px - len_half; ny = py; }
+        }
+        dom_id.x = px; dom_id.y = py;
+
+        if (is_double) dom_id.image_angle = (target_dir == "right" || target_dir == "left") ? 0 : 90;
+        else {
+            if (target_dir == "right") dom_id.image_angle = match_v1 ? 90 : 270;
+            else if (target_dir == "left") dom_id.image_angle = match_v1 ? 270 : 90;
+            else if (target_dir == "down") dom_id.image_angle = match_v1 ? 0 : 180;
+            else if (target_dir == "up") dom_id.image_angle = match_v1 ? 180 : 0;
+        }
+        
+        if (side == "right") { global.right_edge_x = nx; global.right_edge_y = ny; global.right_dir = target_dir; global.right_prev_wid = wid_half; } 
+        else { global.left_edge_x = nx; global.left_edge_y = ny; global.left_dir = target_dir; global.left_prev_wid = wid_half; }
     }
 
     dom_id.owner = "table";
@@ -128,10 +162,9 @@ global.play_domino = function(dom_id, side) {
     if (c_idx >= 0) ds_list_delete(global.computer_hand, c_idx);
 
     // Обновление визуального ряда
-    with (obj_player_hand) alarm[0] = 1;
-    
-    // Передача хода
+
     global.current_turn = (global.current_turn == "player") ? "computer" : "player";
+    with (obj_game_controller_b) alarm[2] = 10;
 }
 
 // --- 4. СОЗДАНИЕ И РАЗДАЧА КОСТЕЙ ---
@@ -141,16 +174,29 @@ for (var v1 = 0; v1 <= 6; v1++) {
         ds_list_add(all_dominoes, [v1, v2]);
     }
 }
+
+// Перемешивание
+ds_list_shuffle(all_dominoes);
+var _size = ds_list_size(all_dominoes);
+repeat(100) { 
+    var _idx1 = irandom(_size - 1);
+    var _idx2 = irandom(_size - 1);
+    var _temp = all_dominoes[| _idx1];
+    all_dominoes[| _idx1] = all_dominoes[| _idx2];
+    all_dominoes[| _idx2] = _temp;
+}
 ds_list_shuffle(all_dominoes);
 
-// Раздаем по 7 костей (всего 14)
+// Раздаем по 7 костей. Базара нет, поэтому остальные 14 костей просто не спавнятся
 for (var i = 0; i < 14; i++) {
     var dom = all_dominoes[| i];
-    var inst = instance_create_layer(0, 0, "Instances", obj_domino);
+    // ВНИМАНИЕ: Если ты создал отдельный объект obj_domino_b, замени здесь obj_domino на obj_domino_b!
+    var inst = instance_create_layer(0, 0, "Instances", obj_domino_b);
     inst.value1 = dom[0]; 
     inst.value2 = dom[1];
-    inst.visible = true;
-
+    inst.sprite_index = asset_get_index("spr_" + string(inst.value1) + string(inst.value2));
+    inst.visible = false;
+    
     if (i < 7) {
         inst.owner = "player";
         ds_list_add(global.player_hand, inst);
@@ -161,5 +207,4 @@ for (var i = 0; i < 14; i++) {
 }
 ds_list_destroy(all_dominoes);
 
-// Запуск поиска стартера
-alarm[0] = 15;
+alarm[0] = 15; // Поиск стартера

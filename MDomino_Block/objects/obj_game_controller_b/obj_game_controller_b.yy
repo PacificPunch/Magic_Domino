@@ -16,8 +16,8 @@
   "name":"obj_game_controller_b",
   "overriddenProperties":[],
   "parent":{
-    "name":"game",
-    "path":"folders/Objects/game.yy",
+    "name":"Objects",
+    "path":"folders/Objects.yy",
   },
   "parentObjectId":null,
   "persistent":false,
