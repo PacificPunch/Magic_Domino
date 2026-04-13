@@ -9,5 +9,5 @@ btn_margin = 20; // Отступ от края экрана и между кно
 gui_w = display_get_gui_width();
 btn_x = gui_w - btn_w / 2 - btn_margin; // Центр кнопки по X
 
-btn_1_y = btn_h / 2 + btn_margin+70;       // Центр кнопки "МЕНЮ" по Y
+btn_1_y = btn_h / 2 + btn_margin;       // Центр кнопки "МЕНЮ" по Y
 btn_2_y = btn_1_y + btn_h + btn_margin; // Центр кнопки "РЕСТАРТ" по Y

@@ -14,7 +14,7 @@ if (variable_global_exists("is_showing_starter") && global.is_showing_starter) {
     draw_set_valign(fa_middle);
     
     var text_x = global.table_center_x;
-    var text_y = global.table_center_y - 200; // Немного смещаем вверх, чтобы не перекрывать саму кость
+    var text_y = global.table_center_y;
     
     var scale = 2; 
     
@@ -56,15 +56,6 @@ if (!global.game_over && ds_list_size(global.table_chain) > 0) {
         draw_text(_x, _y, _label + ": " + _name);
     }
 
-    // Рисуем статус в углах экрана (опционально для удобства игрока)
-    draw_set_halign(fa_left);
-    _draw_element_info(50, 50, global.left_element, "Левый край");
-    
-    draw_set_halign(fa_right);
-    _draw_element_info(1870, 50, global.right_element, "Правый край");
-    
-    draw_set_color(c_white);
-    draw_set_halign(fa_left);
 }
 
 // --- 3. СООБЩЕНИЕ О ЗАВЕРШЕНИИ ИГРЫ ---
@@ -80,10 +71,10 @@ if (global.game_over && global.end_message != "") {
     draw_set_alpha(1.0);
     
     // Текст финала
-    draw_set_color(c_yellow);
-    draw_text_transformed(global.table_center_x, global.table_center_y, global.end_message, 1.5, 1.5, 0);
+ //   draw_set_color(c_yellow);
+ //   draw_text_transformed(global.table_center_x, global.table_center_y, global.end_message, 1.5, 1.5, 0);
     
-    draw_set_color(c_white);
+    draw_set_color(c_black);
     draw_set_halign(fa_left);
     draw_set_valign(fa_top);
 }
@@ -94,49 +85,79 @@ if (!global.game_over) {
     var _gui_x = 1920 - _margin;
     var _gui_y = 1030 - _margin;
     
+    // Границы подложки
+    var _rect_left  = _gui_x - 410;
+    var _rect_right = _gui_x + 30;
+    // Точный центр подложки по горизонтали
+    var _center_x = (_rect_left + _rect_right) / 2; 
+    
     var _fnt = asset_get_index("fnt_bazar");
     if (font_exists(_fnt)) draw_set_font(_fnt);
     
     // 1. Подложка
     draw_set_alpha(0.7);
     draw_set_color(c_black);
-    draw_roundrect_ext(_gui_x - 400, _gui_y - 260, _gui_x + 10, _gui_y + 10, 20, 20, false);
+    draw_roundrect_ext(_rect_left, _gui_y - 260, _rect_right, _gui_y + 25, 20, 20, false);
     draw_set_alpha(1.0);
 
     // 2. Заголовок
     draw_set_color(c_white);
     draw_set_halign(fa_center);
     draw_set_valign(fa_top);
-    draw_text(_gui_x - 195, _gui_y - 250, "СОВМЕСТИМОСТЬ");
+    draw_text(_center_x, _gui_y - 245, "СОВМЕСТИМОСТЬ");
     
     var _start_y = _gui_y - 205; 
-    var _step = 32;              
-    var _lx = _gui_x - 385;      
+    var _step = 35;              
 
-    draw_set_halign(fa_left);
-    
-    // --- СПИСОК ПРАВИЛ (Без спецсимволов) ---
+    // Вспомогательная функция с АВТО-ЦЕНТРОВКОЙ
+    var _draw_colored_row_centered = function(_yy, _cx_box, _main_name, _main_col, _s1, _c1, _s2, _c2) {
+        // СТРОГОЕ СООТВЕТСТВИЕ: считаем ширину именно тех строк, что рисуем ниже
+        var _sep1 = " : ";
+        var _sep2 = "и ";
+        var _total_w = string_width(_main_name) + string_width(_sep1) + string_width(_s1) + string_width(_sep2) + string_width(_s2);
+        
+        // Начальная точка X (левый край строки для её центровки)
+        var _curr_x = _cx_box - (_total_w / 2);
+        
+        draw_set_halign(fa_left); 
 
-    // ОГОНЬ
-    draw_set_color(c_red);    draw_text(_lx, _start_y, "ОГОНЬ");
-    draw_set_color(c_white);  draw_text(_lx + 105, _start_y, " + Ветер, Земля");
+        // Основной элемент
+        draw_set_color(_main_col);
+        draw_text(_curr_x, _yy, _main_name);
+        _curr_x += string_width(_main_name);
+        
+        // Разделитель 1
+        draw_set_color(c_white);
+        draw_text(_curr_x, _yy, _sep1);
+        _curr_x += string_width(_sep1);
+        
+        // Первый совместимый
+        draw_set_color(_c1);
+        draw_text(_curr_x, _yy, _s1);
+        _curr_x += string_width(_s1);
+        
+        // Разделитель 2
+        draw_set_color(c_white);
+        draw_text(_curr_x, _yy, _sep2);
+        _curr_x += string_width(_sep2);
+        
+        // Второй совместимый
+        draw_set_color(_c2);
+        draw_text(_curr_x, _yy, _s2);
+    }
 
-    // ВОДА
-    draw_set_color(c_blue);   draw_text(_lx, _start_y + _step, "ВОДА");
-    draw_set_color(c_white);  draw_text(_lx + 105, _start_y + _step, " + Ветер, Земля");
+    // --- ОТРИСОВКА СПИСКА ПРАВИЛ ---
 
-    // ВЕТЕР
-    draw_set_color(c_aqua);   draw_text(_lx, _start_y + _step * 2, "ВЕТЕР");
-    draw_set_color(c_white);  draw_text(_lx + 105, _start_y + _step * 2, " + Огонь, Вода");
-
-    // ЗЕМЛЯ
-    draw_set_color(c_orange); draw_text(_lx, _start_y + _step * 3, "ЗЕМЛЯ");
-    draw_set_color(c_white);  draw_text(_lx + 105, _start_y + _step * 3, " + Огонь, Вода");
+    _draw_colored_row_centered(_start_y, _center_x, "ОГОНЬ", c_red, "ВОЗДУХ ", c_aqua, "ЗЕМЛЯ", c_green);
+    _draw_colored_row_centered(_start_y + _step, _center_x, "ВОДА", c_blue, "ВОЗДУХ ", c_aqua, "ЗЕМЛЯ", c_green);
+    _draw_colored_row_centered(_start_y + _step * 2, _center_x, "ВОЗДУХ", c_aqua, "ОГОНЬ ", c_red, "ВОДА", c_blue);
+    _draw_colored_row_centered(_start_y + _step * 3, _center_x, "ЗЕМЛЯ", c_green, "ОГОНЬ ", c_red, "ВОДА", c_blue);
 
     // 3. СООБЩЕНИЕ ПРО ДУБЛИ
-    draw_set_color(c_yellow);
+    draw_set_color(c_white);
     draw_set_halign(fa_center);
-    draw_text(_gui_x - 195, _gui_y - 55, "ДУБЛИ - МОСТЫ\n(Универсальны)");
+    // Позиция Y немного подкорректирована, чтобы надпись была в нижней части новой подложки
+    draw_text(_center_x, _gui_y - 45, "ДУБЛИ - МОСТЫ\n(УНИВЕРСАЛЬНЫ)");
 
     // Сброс настроек
     draw_set_halign(fa_left);

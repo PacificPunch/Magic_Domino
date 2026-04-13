@@ -45,6 +45,7 @@
     {"name":"spr_55","order":26,"path":"sprites/spr_55/spr_55.yy",},
     {"name":"spr_56","order":27,"path":"sprites/spr_56/spr_56.yy",},
     {"name":"spr_66","order":28,"path":"sprites/spr_66/spr_66.yy",},
+    {"name":"spr_background_b","order":7,"path":"sprites/spr_background_b/spr_background_b.yy",},
     {"name":"spr_background","order":2,"path":"sprites/spr_background/spr_background.yy",},
     {"name":"spr_button","order":6,"path":"sprites/spr_button/spr_button.yy",},
     {"name":"spr_domino_c","order":1,"path":"sprites/spr_domino_c/spr_domino_c.yy",},
