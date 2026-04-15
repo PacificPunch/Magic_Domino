@@ -101,35 +101,42 @@ global.first_turn_dir = "";
 global.left_dir = "left"; global.right_dir = "right";
 global.left_prev_wid = 32; global.right_prev_wid = 32;
 
-// --- 4. КАРТА РАСПРЕДЕЛЕНИЯ СТИХИЙ (Баланс Сил) ---
-global.domino_elemental_map = ds_map_create();
-var _m = global.domino_elemental_map;
 
-// Земля (🪨)
-_m[? "spr_00"] = ELEMENT.EARTH; _m[? "spr_01"] = ELEMENT.EARTH; _m[? "spr_02"] = ELEMENT.EARTH;
-_m[? "spr_03"] = ELEMENT.EARTH; _m[? "spr_11"] = ELEMENT.EARTH; _m[? "spr_12"] = ELEMENT.EARTH;
-_m[? "spr_22"] = ELEMENT.EARTH;
-// Вода (💧)
-_m[? "spr_04"] = ELEMENT.WATER; _m[? "spr_13"] = ELEMENT.WATER; _m[? "spr_05"] = ELEMENT.WATER;
-_m[? "spr_14"] = ELEMENT.WATER; _m[? "spr_23"] = ELEMENT.WATER; _m[? "spr_33"] = ELEMENT.WATER;
-_m[? "spr_06"] = ELEMENT.WATER;
-// Воздух (🌬️)
-_m[? "spr_16"] = ELEMENT.AIR; _m[? "spr_25"] = ELEMENT.AIR; _m[? "spr_34"] = ELEMENT.AIR;
-_m[? "spr_44"] = ELEMENT.AIR; _m[? "spr_15"] = ELEMENT.AIR; _m[? "spr_26"] = ELEMENT.AIR;
-_m[? "spr_35"] = ELEMENT.AIR;
-// Огонь (🔥)
-_m[? "spr_46"] = ELEMENT.FIRE; _m[? "spr_55"] = ELEMENT.FIRE; _m[? "spr_45"] = ELEMENT.FIRE;
-_m[? "spr_36"] = ELEMENT.FIRE; _m[? "spr_56"] = ELEMENT.FIRE; _m[? "spr_66"] = ELEMENT.FIRE;
-_m[? "spr_24"] = ELEMENT.FIRE;
+// --- 4. ДИНАМИЧЕСКАЯ КАРТА РАСПРЕДЕЛЕНИЯ СТИХИЙ (Баланс Сил) ---
+// Раньше тут была жестко прописанная карта. Теперь мы создаем её пустой.
+if (variable_global_exists("domino_elemental_map")) {
+    ds_map_destroy(global.domino_elemental_map);
+}
+global.domino_elemental_map = ds_map_create();
+
+// Создаем "мешок" стихий для идеального баланса (по 7 костей на каждую стихию)
+var element_pool = ds_list_create();
+repeat(7) {
+    ds_list_add(element_pool, ELEMENT.EARTH);
+    ds_list_add(element_pool, ELEMENT.WATER);
+    ds_list_add(element_pool, ELEMENT.AIR);
+    ds_list_add(element_pool, ELEMENT.FIRE);
+}
+
+// Тщательно перемешиваем стихии в мешке
+randomize();
+ds_list_shuffle(element_pool);
+// Дополнительная прокрутка генератора для надежности
+repeat(50) { 
+    var _idx1 = irandom(27);
+    var _idx2 = irandom(27);
+    var _temp = element_pool[| _idx1];
+    element_pool[| _idx1] = element_pool[| _idx2];
+    element_pool[| _idx2] = _temp;
+}
 
 // --- 5. СОЗДАНИЕ И РАЗДАЧА КОСТЕЙ ---
-
 var all_dominoes = ds_list_create();
 for (var v1 = 0; v1 <= 6; v1++) {
     for (var v2 = v1; v2 <= 6; v2++) { ds_list_add(all_dominoes, [v1, v2]); }
 }
 
-// Усиленное перемешивание
+// Перемешивание самих костей
 ds_list_shuffle(all_dominoes);
 var _size = ds_list_size(all_dominoes);
 repeat(100) {
@@ -141,6 +148,7 @@ repeat(100) {
 }
 ds_list_shuffle(all_dominoes);
 
+// Раздача
 for (var i = 0; i < 28; i++) {
     var dom = all_dominoes[| i];
     var inst = instance_create_layer(0, 0, "Instances", obj_domino_elem);
@@ -151,12 +159,13 @@ for (var i = 0; i < 28; i++) {
     var spr_name = "spr_" + string(inst.value1) + string(inst.value2);
     inst.sprite_index = asset_get_index(spr_name);
     
-    // Назначаем стихию из карты
-    if (ds_map_exists(global.domino_elemental_map, spr_name)) {
-        inst.element = global.domino_elemental_map[? spr_name];
-    } else {
-        inst.element = ELEMENT.NONE;
-    }
+    // --- НОВОЕ: НАЗНАЧАЕМ СЛУЧАЙНУЮ СТИХИЮ ИЗ МЕШКА ---
+    var assigned_element = element_pool[| i];
+    inst.element = assigned_element;
+    
+    // Динамически записываем это в глобальную карту! 
+    // Благодаря этому ваша костяшка сможет корректно проверить себя в Alarm 11
+    global.domino_elemental_map[? spr_name] = assigned_element;
     
     inst.visible = false;
     
@@ -164,10 +173,15 @@ for (var i = 0; i < 28; i++) {
     else if (i < 14) { inst.owner = "computer"; ds_list_add(global.computer_hand, inst); }
     else { inst.owner = "bazar"; ds_list_add(global.bazar, inst); }
 }
+
+// Очищаем память от списков
 ds_list_destroy(all_dominoes);
+ds_list_destroy(element_pool); // Важно удалить временный "мешок" стихий из памяти
 
 instance_create_layer(200, global.table_center_y, "Instances", obj_bazar_elem);
 alarm[0] = 2; // Поиск стартовой кости
+
+
 
 // --- 6. ОСНОВНАЯ ФУНКЦИЯ ХОДА ---
 

@@ -35,7 +35,6 @@ if (variable_global_exists("is_showing_starter") && global.is_showing_starter) {
 // --- 2. ВИЗУАЛИЗАЦИЯ АКТИВНЫХ СТИХИЙ (Elemental Helper) ---
 // Рисуем небольшие иконки или цветовые индикаторы по краям экрана, 
 // чтобы игрок видел, какая стихия сейчас "блокирует" концы цепочки.
-
 if (!global.game_over && ds_list_size(global.table_chain) > 0) {
     var _draw_element_info = function(_x, _y, _elem, _label) {
         if (_elem == ELEMENT.NONE) return;
@@ -79,167 +78,175 @@ if (global.game_over && global.end_message != "") {
     draw_set_valign(fa_top);
 }
 
-// --- 4. ШПАРГАЛКА ПО СТИХИЯМ (Таблица совместимости) ---
+
+// Управление выходом
+if (keyboard_check_direct(vk_tab)) {}
+
+// --- 4. ШПАРГАЛКА ПО СТИХИЯМ (ТЕПЕРЬ СЛЕВА) ---
 if (!global.game_over) {
     var _margin = 30;
-    var _gui_x = 1920 - _margin;
     var _gui_y = 1030 - _margin;
     
-    // Границы подложки
-    var _rect_left  = _gui_x - 410;
-    var _rect_right = _gui_x + 30;
-    // Точный центр подложки по горизонтали
+    // Координаты подложки (ЛЕВАЯ СТОРОНА)
+    var _rect_left  = 0;
+    var _rect_right = 440;
     var _center_x = (_rect_left + _rect_right) / 2; 
     
     var _fnt = asset_get_index("fnt_bazar");
     if (font_exists(_fnt)) draw_set_font(_fnt);
     
-    // 1. Подложка
+    // 1. Подложка (с небольшим вылетом влево для красоты)
     draw_set_alpha(0.7);
     draw_set_color(c_black);
-    draw_roundrect_ext(_rect_left, _gui_y - 260, _rect_right, _gui_y + 25, 20, 20, false);
+    draw_roundrect_ext(_rect_left - 20, _gui_y - 260, _rect_right, _gui_y + 25, 20, 20, false);
     draw_set_alpha(1.0);
 
     // 2. Заголовок
     draw_set_color(c_white);
     draw_set_halign(fa_center);
     draw_set_valign(fa_top);
-    draw_text(_center_x, _gui_y - 230, "СОВМЕСТИМОСТЬ");
+    draw_text(_center_x, _gui_y - 240, "СОВМЕСТИМОСТЬ");
     
-    var _start_y = _gui_y - 160; 
-    var _step = 35;              
+    // Центр круга
+    var _cx = _center_x;
+    var _cy = _gui_y - 105; 
+    var _r_v = 85;  // Вертикальный радиус
+    var _r_h = 120; // Горизонтальный радиус
+    
+    draw_set_valign(fa_middle); 
 
-    // Вспомогательная функция с АВТО-ЦЕНТРОВКОЙ
-    var _draw_colored_row_centered = function(_yy, _cx_box, _main_name, _main_col, _s1, _c1, _s2, _c2) {
-        // СТРОГОЕ СООТВЕТСТВИЕ: считаем ширину именно тех строк, что рисуем ниже
-        var _sep1 = " : ";
-        var _sep2 = "и ";
-        var _total_w = string_width(_main_name) + string_width(_sep1) + string_width(_s1) + string_width(_sep2) + string_width(_s2);
-        
-        // Начальная точка X (левый край строки для её центровки)
-        var _curr_x = _cx_box - (_total_w / 2);
-        
-        draw_set_halign(fa_left); 
+    // Отрисовка слов
+    draw_set_color(c_red);   draw_text(_cx, _cy - _r_v, "ОГОНЬ");
+    draw_set_color(c_blue);  draw_text(_cx, _cy + _r_v, "ВОДА");
+    draw_set_color(c_green); draw_text(_cx - _r_h, _cy, "ЗЕМЛЯ");
+    draw_set_color(c_aqua);  draw_text(_cx + _r_h, _cy, "ВОЗДУХ");
 
-        // Основной элемент
-        draw_set_color(_main_col);
-        draw_text(_curr_x, _yy, _main_name);
-        _curr_x += string_width(_main_name);
-        
-        // Разделитель 1
-        draw_set_color(c_white);
-        draw_text(_curr_x, _yy, _sep1);
-        _curr_x += string_width(_sep1);
-        
-        // Первый совместимый
-        draw_set_color(_c1);
-        draw_text(_curr_x, _yy, _s1);
-        _curr_x += string_width(_s1);
-        
-        // Разделитель 2
-        draw_set_color(c_white);
-        draw_text(_curr_x, _yy, _sep2);
-        _curr_x += string_width(_sep2);
-        
-        // Второй совместимый
-        draw_set_color(_c2);
-        draw_text(_curr_x, _yy, _s2);
-    }
+    // Зеленые стрелки (c_lime)
+    draw_set_color(c_lime);
+    var _arr_size = 12; 
+    var _px = 25; var _py = 20;
+    var _pad_v = _r_v - 15; var _pad_h = _r_h - 45;
+    
+    draw_arrow(_cx + _px, _cy - _pad_v, _cx + _pad_h, _cy - _py, _arr_size);
+    draw_arrow(_cx + _pad_h, _cy + _py, _cx + _px, _cy + _pad_v, _arr_size);
+    draw_arrow(_cx - _px, _cy + _pad_v, _cx - _pad_h, _cy + _py, _arr_size);
+    draw_arrow(_cx - _pad_h, _cy - _py, _cx - _px, _cy - _pad_v, _arr_size);
 
-    // --- ОТРИСОВКА СПИСКА ПРАВИЛ ---
+    // Красные стрелки (Конфликты)
+    draw_set_color(c_red);
+    var _red_v = 60; var _red_h = 75;
+    draw_arrow(_cx, _cy - _red_v, _cx, _cy + _red_v, _arr_size);
+    draw_arrow(_cx, _cy + _red_v, _cx, _cy - _red_v, _arr_size);
+    draw_arrow(_cx - _red_h, _cy, _cx + _red_h, _cy, _arr_size);
+    draw_arrow(_cx + _red_h, _cy, _cx - _red_h, _cy, _arr_size);
 
-    _draw_colored_row_centered(_start_y, _center_x, "ОГОНЬ", c_red, "ВОЗДУХ ", c_aqua, "ЗЕМЛЯ", c_green);
-    _draw_colored_row_centered(_start_y + _step, _center_x, "ВОДА", c_blue, "ВОЗДУХ ", c_aqua, "ЗЕМЛЯ", c_green);
-    _draw_colored_row_centered(_start_y + _step * 2, _center_x, "ВОЗДУХ", c_aqua, "ОГОНЬ ", c_red, "ВОДА", c_blue);
-    _draw_colored_row_centered(_start_y + _step * 3, _center_x, "ЗЕМЛЯ", c_green, "ОГОНЬ ", c_red, "ВОДА", c_blue);
-
-
-    // Сброс настроек
-    draw_set_halign(fa_left);
-    draw_set_valign(fa_top);
-    draw_set_color(c_white);
+    draw_set_halign(fa_left); draw_set_valign(fa_top); draw_set_color(c_white);
 }
 
-// --- 5. ЛЕВАЯ ШПАРГАЛКА (Круговая совместимость стихий) ---
+// --- 6. ПАНЕЛЬ ВСЕХ ДОМИНО (СПРАВА - КОМПАКТНЫЙ ТАКТИЧЕСКИЙ ТРЕКЕР) ---
 if (!global.game_over) {
-    var _margin = 30;
-    var _gui_y = 1030 - _margin;
-   
-    var _rect_left_l = 0;
-    var _rect_right_l = 490;     
-    var _center_x_l = (_rect_left_l + _rect_right_l) / 2;
-   
-    var _fnt = asset_get_index("fnt_bazar");
-    if (font_exists(_fnt)) draw_set_font(_fnt);
-   
-    // Подложка
+    // Координаты подложки
+    var _panel_w = 350; 
+    var _rect_left_d = 1920 - _panel_w; 
+    var _rect_right_d = 1920;
+    var _rect_bottom_d = 1080;
+    
+    // ИЗМЕНЕНИЕ: Подняли верхнюю границу подложки, чтобы кости не вылезали (было 600)
+    var _rect_top_d = 560; 
+    var _cx_d = (_rect_left_d + _rect_right_d) / 2;
+    
+    // 1. Подложка
     draw_set_alpha(0.7);
     draw_set_color(c_black);
-    draw_roundrect_ext(_rect_left_l, _gui_y - 310, _rect_right_l, _gui_y + 25, 20, 20, false);
+    // Рисуем с небольшим запасом сверху и справа для скругления
+    draw_roundrect_ext(_rect_left_d, _rect_top_d, _rect_right_d + 20, _rect_bottom_d + 20, 20, 20, false);
     draw_set_alpha(1.0);
-
-    // Заголовок
-    draw_set_color(c_white);
-    draw_set_halign(fa_center);
-    draw_set_valign(fa_top);
-    draw_text(_center_x_l, _gui_y - 295, "СОВМЕСТИМОСТЬ");
-   
-    var _dist = 108;             
-    var _cx = _center_x_l;
-    var _cy = _gui_y - 110;
-   
-    draw_set_valign(fa_middle);
-    draw_set_halign(fa_center);
-
-    // Надписи стихий
-    draw_set_color(c_red);   draw_text(_cx, _cy - _dist, "ОГОНЬ");
-    draw_set_color(c_aqua);  draw_text(_cx + _dist + 26, _cy, "ВОЗДУХ");
-    draw_set_color(c_blue);  draw_text(_cx, _cy + _dist, "ВОДА");
-    draw_set_color(c_green); draw_text(_cx - _dist - 26, _cy, "ЗЕМЛЯ");
-
-    // ====================== ЗЕЛЁНЫЕ СТРЕЛКИ — ОЧЕНЬ КОРОТКИЕ ЛИНИИ ======================
-    draw_set_color(c_lime);
-    var _a_size = 15;   // размер наконечника оставлен нормальным
-
-    // Огонь → Воздух
-    draw_arrow(_cx + 45, _cy - _dist + 34, _cx + _dist + 5, _cy - 20, _a_size);
-
-    // Воздух → Вода
-    draw_arrow(_cx + _dist + 24, _cy + 27, _cx + 15, _cy + _dist - 25, _a_size);
-
-    // Вода → Земля
-    draw_arrow(_cx - 41, _cy + _dist - 33, _cx - _dist - 25, _cy + 20, _a_size);
-
-    // Земля → Огонь
-    draw_arrow(_cx - _dist - 21, _cy - 29, _cx - 17, _cy - _dist + 30, _a_size);
-
-    // ====================== КРАСНЫЕ ДВУХСТОРОННИЕ СТРЕЛКИ — ОЧЕНЬ КОРОТКИЕ ЛИНИИ ======================
-    draw_set_color(c_red);
-    var _arrow_size = 60;
-    var _line_thickness = 2.0;
-
-    // Вертикальная: Огонь → Вода
-    var _vx1 = _cx;
-    var _vy1 = _cy - _dist + 46;   // сильно ближе к Огню
-    var _vx2 = _cx;
-    var _vy2 = _cy + _dist - 46;   // сильно ближе к Воде
     
-    draw_line_width(_vx1, _vy1, _vx2, _vy2, _line_thickness);
-    draw_arrow(_vx1, _vy1, _vx1, _vy1 + 12, _arrow_size);
-    draw_arrow(_vx2, _vy2, _vx2, _vy2 - 12, _arrow_size);
-
-    // Горизонтальная: Земля → Воздух
-    var _hx1 = _cx - _dist - 26 + 46;   // сильно ближе к Земле
-    var _hy1 = _cy;
-    var _hx2 = _cx + _dist + 26 - 46;   // сильно ближе к Воздуху
-    var _hy2 = _cy;
+    // 2. Параметры сетки
+    var _scale = 0.42; 
+    var _pad_x = 48; 
+    var _pad_y = 62;
     
-    draw_line_width(_hx1, _hy1, _hx2, _hy2, _line_thickness);
-    draw_arrow(_hx1, _hy1, _hx1 + 12, _hy1, _arrow_size);
-    draw_arrow(_hx2, _hy2, _hx2 - 12, _hy2, _arrow_size);
+    // Оставляем отступ 25 пикселей от нового верхнего края подложки
+    var _grid_start_y = _rect_top_d + 50; 
+    
+    for (var i = 0; i <= 6; i++) {
+        var _v2 = 6 - i;
+        var _row_w = i * _pad_x;
+        var _start_x = _cx_d - (_row_w / 2);
+        
+        for (var _v1 = 6; _v1 >= _v2; _v1--) {
+            var _val_min = min(_v1, _v2);
+            var _val_max = max(_v1, _v2);
+            var _spr_name = "spr_" + string(_val_min) + string(_val_max);
+            var _spr = asset_get_index(_spr_name);
+            
+            if (_spr != -1) {
+                var _col_idx = 6 - _v1;
+                var _dx = _start_x + (_col_idx * _pad_x);
+                var _dy = _grid_start_y + (i * _pad_y);
+                
+                // Получаем стихию
+                var _elem = ELEMENT.NONE;
+                if (variable_global_exists("domino_elemental_map") && ds_map_exists(global.domino_elemental_map, _spr_name)) {
+                    _elem = global.domino_elemental_map[? _spr_name];
+                }
+                
+                var _col = c_white;
+                switch(_elem) {
+                    case ELEMENT.EARTH: _col = c_green; break;
+                    case ELEMENT.WATER: _col = c_blue;  break;
+                    case ELEMENT.AIR:   _col = c_aqua;  break;
+                    case ELEMENT.FIRE:  _col = c_red;   break;
+                }
 
-    // Сброс
-    draw_set_halign(fa_left);
-    draw_set_valign(fa_top);
-    draw_set_color(c_white);
+                // Логика видимости
+                var _is_played = false; 
+                var _in_player_hand = false; 
+                
+                if (variable_global_exists("table_chain")) {
+                    for(var k = 0; k < ds_list_size(global.table_chain); k++) {
+                        var _t = global.table_chain[| k];
+                        if ((_t.value1 == _v1 && _t.value2 == _v2) || (_t.value1 == _v2 && _t.value2 == _v1)) {
+                            _is_played = true; 
+                            break;
+                        }
+                    }
+                }
+                
+                if (!_is_played && variable_global_exists("player_hand")) {
+                    for(var k = 0; k < ds_list_size(global.player_hand); k++) {
+                        var _p = global.player_hand[| k];
+                        if ((_p.value1 == _v1 && _p.value2 == _v2) || (_p.value1 == _v2 && _p.value2 == _v1)) {
+                            _in_player_hand = true; 
+                            break;
+                        }
+                    }
+                }
+
+                // --- ОТРИСОВКА ---
+                var _base_alpha = _is_played ? 0.6 : 1.0;
+                
+                draw_sprite_ext(_spr, 0, _dx, _dy, _scale, _scale, 0, c_white, _base_alpha);
+                
+                if ((_is_played || _in_player_hand) && _elem != ELEMENT.NONE) {
+                    draw_sprite_ext(_spr, 0, _dx, _dy, _scale, _scale, 0, _col, 0.4 * _base_alpha);
+                }
+            }
+        }
+    }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
