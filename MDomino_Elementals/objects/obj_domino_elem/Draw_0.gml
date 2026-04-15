@@ -87,7 +87,7 @@ if (show_face) {
         
         if (is_choice_target || is_being_placed) {
             var pulse = 0.4 + sin(current_time * 0.01) * 0.2;
-            draw_rotated_frame(x, y, image_angle, c_yellow, pulse);
+            draw_rotated_frame(x, y, image_angle, c_lime, pulse);
             draw_set_alpha(1.0); draw_set_color(c_white);
         }
     }
