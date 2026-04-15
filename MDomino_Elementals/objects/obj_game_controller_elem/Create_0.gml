@@ -27,16 +27,18 @@ global.check_has_moves = function(target_hand) {
     for (var i = 0; i < ds_list_size(target_hand); i++) {
         var inst = target_hand[| i];
         
-        // Проверяем ЛЕВЫЙ край (Цифра совпадает И (Стихия не конфликтует ИЛИ это Дубль))
+        // Проверяем ЛЕВЫЙ край
+        // УБРАНО inst.is_double: теперь дубли проверяются на конфликт стихий
         if (inst.value1 == global.left_end || inst.value2 == global.left_end) {
-            if (inst.is_double || global.element_conflict[inst.element] != global.left_element) {
+            if (global.element_conflict[inst.element] != global.left_element) {
                 return true;
             }
         }
         
         // Проверяем ПРАВЫЙ край
+        // УБРАНО inst.is_double
         if (inst.value1 == global.right_end || inst.value2 == global.right_end) {
-            if (inst.is_double || global.element_conflict[inst.element] != global.right_element) {
+            if (global.element_conflict[inst.element] != global.right_element) {
                 return true;
             }
         }

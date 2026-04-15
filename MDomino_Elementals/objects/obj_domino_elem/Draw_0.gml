@@ -14,16 +14,17 @@ if (owner == "player" || owner == "table" || global.game_over) {
 }
 
 // --- 2. ЛОГИКА ЦВЕТА И ДОСТУПНОСТИ ---
+// УБРАНО: is_double || (теперь дубли подчиняются общим правилам конфликтов стихий)
 var can_play_left = (value1 == global.left_end || value2 == global.left_end) && 
-                    (is_double || global.element_conflict[element] != global.left_element);
+                    (global.element_conflict[element] != global.left_element);
                     
 var can_play_right = (value1 == global.right_end || value2 == global.right_end) && 
-                     (is_double || global.element_conflict[element] != global.right_element);
+                     (global.element_conflict[element] != global.right_element);
 
 var is_playable = (ds_list_size(global.table_chain) == 0) || (can_play_left || can_play_right);
 
 if (show_face) {
-    draw_col = c_white; // Дубли и обычные кости по умолчанию белые
+    draw_col = c_white; 
 
     // ПРАВИЛО ЯРКОСТИ: Если ход игрока
     if (owner == "player" && !global.game_over && !global.choice_mode) {
@@ -39,56 +40,42 @@ if (show_face) {
 
 // --- 3. ИТОГОВАЯ ОТРИСОВКА ---
 if (show_face) {
-    // Отрисовка основной кости
+    // А) Отрисовка основной кости
     draw_sprite_ext(sprite_index, image_index, x, y, 1, 1, image_angle, draw_col, final_alpha);
     
-    // Индикатор стихии (только для обычных костей)
-    if (!is_double) {
-        var elem_col = c_white;
-        switch(element) {
-            case ELEMENT.EARTH: elem_col = c_green; break;
-            case ELEMENT.WATER: elem_col = c_blue;  break;
-            case ELEMENT.AIR:   elem_col = c_aqua;  break;
-            case ELEMENT.FIRE:  elem_col = c_red;   break;
-        }
-        draw_sprite_ext(sprite_index, image_index, x, y, 0.95, 0.95, image_angle, elem_col, 0.6 * final_alpha);
+    // Б) Индикатор стихии (Для всех костей, включая дубли)
+    var elem_col = c_white;
+    switch(element) {
+        case ELEMENT.EARTH: elem_col = c_green; break;
+        case ELEMENT.WATER: elem_col = c_blue;  break;
+        case ELEMENT.AIR:   elem_col = c_aqua;  break;
+        case ELEMENT.FIRE:  elem_col = c_red;   break;
+    }
+    
+    if (element != ELEMENT.NONE) {
+        // Используем масштаб 1.0, чтобы точки стояли точно друг на друге
+        draw_sprite_ext(sprite_index, image_index, x, y, 1, 1, image_angle, elem_col, 0.4 * final_alpha);
     }
 
-// --- НОВОЕ: ПОДСВЕТКА ПРИ ВЫБОРЕ НАПРАВЛЕНИЯ (СТОЛ + ВЫБРАННАЯ В РУКЕ) ---
+    // --- В) ПОДСВЕТКА ПРИ ВЫБОРЕ НАПРАВЛЕНИЯ (ЖЕЛТАЯ РАМКА) ---
     if (global.choice_mode) {
-        // Светиться должны: края на столе ИЛИ сама выбранная костяшка в руке
         var is_choice_target = (owner == "table" && (id == global.left_tile_id || id == global.right_tile_id));
         var is_being_placed = (id == global.selected_domino);
         
         if (is_choice_target || is_being_placed) {
-            // Пульсирующий эффект
             var pulse = 0.4 + sin(current_time * 0.01) * 0.2;
             draw_set_alpha(pulse);
-            draw_set_color(c_lime);
+            draw_set_color(c_yellow); // Изменено на желтый для консистентности выбора
             
-            // Параметры рамки (чуть больше размера костяшки 64x128)
-            var w = 35; 
-            var h = 67;
-            
-            // Математика поворота для любого угла (image_angle)
+            var w = 35; var h = 67;
             var angle_rad = degtorad(image_angle);
-            var cos_a = cos(angle_rad);
-            var sin_a = sin(angle_rad);
+            var cos_a = cos(angle_rad); var sin_a = sin(angle_rad);
 
-            // Вычисляем 4 угла
-            var x1 = x + (-w * cos_a - (-h) * sin_a);
-            var y1 = y + (-w * sin_a + (-h) * cos_a);
-            
-            var x2 = x + (w * cos_a - (-h) * sin_a);
-            var y2 = y + (w * sin_a + (-h) * cos_a);
-            
-            var x3 = x + (w * cos_a - h * sin_a);
-            var y3 = y + (w * sin_a + h * cos_a);
-            
-            var x4 = x + (-w * cos_a - h * sin_a);
-            var y4 = y + (-w * sin_a + h * cos_a);
+            var x1 = x + (-w * cos_a - (-h) * sin_a); var y1 = y + (-w * sin_a + (-h) * cos_a);
+            var x2 = x + (w * cos_a - (-h) * sin_a);  var y2 = y + (w * sin_a + (-h) * cos_a);
+            var x3 = x + (w * cos_a - h * sin_a);     var y3 = y + (w * sin_a + h * cos_a);
+            var x4 = x + (-w * cos_a - h * sin_a);    var y4 = y + (-w * sin_a + h * cos_a);
 
-            // Отрисовка жирной рамки
             var thickness = 4;
             draw_line_width(x1, y1, x2, y2, thickness);
             draw_line_width(x2, y2, x3, y3, thickness);
@@ -108,9 +95,8 @@ if (show_face) {
 // --- 4. РАМКА ПОДСВЕТКИ (ПРИ НАВЕДЕНИИ В РУКЕ) ---
 if (owner == "player" && is_playable && !global.choice_mode && global.current_turn == "player") {
     if (position_meeting(mouse_x, mouse_y, id)) {
-        draw_set_color(c_lime);
+        draw_set_color(c_lime); // Зеленая рамка при наведении на доступную кость
         draw_set_alpha(1);
-        // Рисуем прямоугольник с учетом возможного поворота (упрощенно)
         draw_rectangle(x-34, y-66, x+34, y+66, true);
         draw_set_alpha(1.0);
         draw_set_color(c_white);

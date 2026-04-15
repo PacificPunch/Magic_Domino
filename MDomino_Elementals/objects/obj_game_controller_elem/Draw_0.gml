@@ -104,9 +104,9 @@ if (!global.game_over) {
     draw_set_color(c_white);
     draw_set_halign(fa_center);
     draw_set_valign(fa_top);
-    draw_text(_center_x, _gui_y - 245, "СОВМЕСТИМОСТЬ");
+    draw_text(_center_x, _gui_y - 230, "СОВМЕСТИМОСТЬ");
     
-    var _start_y = _gui_y - 205; 
+    var _start_y = _gui_y - 160; 
     var _step = 35;              
 
     // Вспомогательная функция с АВТО-ЦЕНТРОВКОЙ
@@ -153,13 +153,92 @@ if (!global.game_over) {
     _draw_colored_row_centered(_start_y + _step * 2, _center_x, "ВОЗДУХ", c_aqua, "ОГОНЬ ", c_red, "ВОДА", c_blue);
     _draw_colored_row_centered(_start_y + _step * 3, _center_x, "ЗЕМЛЯ", c_green, "ОГОНЬ ", c_red, "ВОДА", c_blue);
 
-    // 3. СООБЩЕНИЕ ПРО ДУБЛИ
-    draw_set_color(c_white);
-    draw_set_halign(fa_center);
-    // Позиция Y немного подкорректирована, чтобы надпись была в нижней части новой подложки
-    draw_text(_center_x, _gui_y - 45, "ДУБЛИ - МОСТЫ\n(УНИВЕРСАЛЬНЫ)");
 
     // Сброс настроек
+    draw_set_halign(fa_left);
+    draw_set_valign(fa_top);
+    draw_set_color(c_white);
+}
+
+// --- 5. ЛЕВАЯ ШПАРГАЛКА (Круговая совместимость стихий) ---
+if (!global.game_over) {
+    var _margin = 30;
+    var _gui_y = 1030 - _margin;
+   
+    var _rect_left_l = 0;
+    var _rect_right_l = 490;     
+    var _center_x_l = (_rect_left_l + _rect_right_l) / 2;
+   
+    var _fnt = asset_get_index("fnt_bazar");
+    if (font_exists(_fnt)) draw_set_font(_fnt);
+   
+    // Подложка
+    draw_set_alpha(0.7);
+    draw_set_color(c_black);
+    draw_roundrect_ext(_rect_left_l, _gui_y - 310, _rect_right_l, _gui_y + 25, 20, 20, false);
+    draw_set_alpha(1.0);
+
+    // Заголовок
+    draw_set_color(c_white);
+    draw_set_halign(fa_center);
+    draw_set_valign(fa_top);
+    draw_text(_center_x_l, _gui_y - 295, "СОВМЕСТИМОСТЬ");
+   
+    var _dist = 108;             
+    var _cx = _center_x_l;
+    var _cy = _gui_y - 110;
+   
+    draw_set_valign(fa_middle);
+    draw_set_halign(fa_center);
+
+    // Надписи стихий
+    draw_set_color(c_red);   draw_text(_cx, _cy - _dist, "ОГОНЬ");
+    draw_set_color(c_aqua);  draw_text(_cx + _dist + 26, _cy, "ВОЗДУХ");
+    draw_set_color(c_blue);  draw_text(_cx, _cy + _dist, "ВОДА");
+    draw_set_color(c_green); draw_text(_cx - _dist - 26, _cy, "ЗЕМЛЯ");
+
+    // ====================== ЗЕЛЁНЫЕ СТРЕЛКИ — ОЧЕНЬ КОРОТКИЕ ЛИНИИ ======================
+    draw_set_color(c_lime);
+    var _a_size = 15;   // размер наконечника оставлен нормальным
+
+    // Огонь → Воздух
+    draw_arrow(_cx + 45, _cy - _dist + 34, _cx + _dist + 5, _cy - 20, _a_size);
+
+    // Воздух → Вода
+    draw_arrow(_cx + _dist + 24, _cy + 27, _cx + 15, _cy + _dist - 25, _a_size);
+
+    // Вода → Земля
+    draw_arrow(_cx - 41, _cy + _dist - 33, _cx - _dist - 25, _cy + 20, _a_size);
+
+    // Земля → Огонь
+    draw_arrow(_cx - _dist - 21, _cy - 29, _cx - 17, _cy - _dist + 30, _a_size);
+
+    // ====================== КРАСНЫЕ ДВУХСТОРОННИЕ СТРЕЛКИ — ОЧЕНЬ КОРОТКИЕ ЛИНИИ ======================
+    draw_set_color(c_red);
+    var _arrow_size = 60;
+    var _line_thickness = 2.0;
+
+    // Вертикальная: Огонь → Вода
+    var _vx1 = _cx;
+    var _vy1 = _cy - _dist + 46;   // сильно ближе к Огню
+    var _vx2 = _cx;
+    var _vy2 = _cy + _dist - 46;   // сильно ближе к Воде
+    
+    draw_line_width(_vx1, _vy1, _vx2, _vy2, _line_thickness);
+    draw_arrow(_vx1, _vy1, _vx1, _vy1 + 12, _arrow_size);
+    draw_arrow(_vx2, _vy2, _vx2, _vy2 - 12, _arrow_size);
+
+    // Горизонтальная: Земля → Воздух
+    var _hx1 = _cx - _dist - 26 + 46;   // сильно ближе к Земле
+    var _hy1 = _cy;
+    var _hx2 = _cx + _dist + 26 - 46;   // сильно ближе к Воздуху
+    var _hy2 = _cy;
+    
+    draw_line_width(_hx1, _hy1, _hx2, _hy2, _line_thickness);
+    draw_arrow(_hx1, _hy1, _hx1 + 12, _hy1, _arrow_size);
+    draw_arrow(_hx2, _hy2, _hx2 - 12, _hy2, _arrow_size);
+
+    // Сброс
     draw_set_halign(fa_left);
     draw_set_valign(fa_top);
     draw_set_color(c_white);

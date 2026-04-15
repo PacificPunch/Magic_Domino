@@ -4,32 +4,30 @@ if (global.game_over || global.current_turn != "computer") exit;
 
 var played = false;
 
-// 1. Ищем подходящий ход
 for (var i = 0; i < ds_list_size(global.computer_hand); i++) {
     var dom = global.computer_hand[| i];
     var my_elem = dom.element;
     
-    // Если стол пуст (первый ход игры)
     if (ds_list_size(global.table_chain) == 0) {
-        global.play_domino(dom, "first"); 
+        global.play_domino(dom, "first");
         played = true; 
         break;
     } 
     else {
         // --- ПРОВЕРКА ЛЕВОГО КРАЯ ---
+        // УБРАНО dom.is_double
         if (dom.value1 == global.left_end || dom.value2 == global.left_end) {
-            // Условие Elemental: Дубль ИЛИ нет конфликта стихий
-            if (dom.is_double || global.element_conflict[my_elem] != global.left_element) {
-                global.play_domino(dom, "left"); 
+            if (global.element_conflict[my_elem] != global.left_element) {
+                global.play_domino(dom, "left");
                 played = true; 
                 break;
             }
         }
         
         // --- ПРОВЕРКА ПРАВОГО КРАЯ ---
+        // УБРАНО dom.is_double
         if (!played && (dom.value1 == global.right_end || dom.value2 == global.right_end)) {
-            // Условие Elemental: Дубль ИЛИ нет конфликта стихий
-            if (dom.is_double || global.element_conflict[my_elem] != global.right_element) {
+            if (global.element_conflict[my_elem] != global.right_element) {
                 global.play_domino(dom, "right"); 
                 played = true; 
                 break;
@@ -37,6 +35,8 @@ for (var i = 0; i < ds_list_size(global.computer_hand); i++) {
         }
     }
 }
+
+// ... (остальной код Alarm 1 без изменений)
 
 // 2. Если хода нет и на базаре что-то есть - берем кость
 if (!played) {
