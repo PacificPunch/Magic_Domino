@@ -1,0 +1,1 @@
+show_cheat_colors = !show_cheat_colors;
